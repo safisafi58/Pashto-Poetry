@@ -1,0 +1,6 @@
+{
+  "name": "پښتو شعرونه",
+  "description": "د پښتو شعرونو تر ټولو بډایه او ښکلې ټولګه. Pashto poetry application with poems, poets, categories, favorites, user poems, comments, and admin management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
