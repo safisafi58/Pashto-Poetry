@@ -67,5 +67,7 @@ data class UserEntity(
     val isAdmin: Boolean,
     val isVerifiedPoet: Boolean,
     val isLoggedIn: Boolean,
-    val createdAt: Long
+    val createdAt: Long,
+    val telegramBotToken: String? = null,
+    val telegramChannelId: String? = null
 )

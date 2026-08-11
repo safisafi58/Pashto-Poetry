@@ -20,7 +20,9 @@ class AuthRepository(private val db: AppDatabase) {
                 isAdmin = entity.isAdmin,
                 isVerifiedPoet = entity.isVerifiedPoet,
                 isLoggedIn = entity.isLoggedIn,
-                createdAt = entity.createdAt
+                createdAt = entity.createdAt,
+                telegramBotToken = entity.telegramBotToken,
+                telegramChannelId = entity.telegramChannelId
             )
         } else {
             UserProfile() // Default guest profile
@@ -38,7 +40,9 @@ class AuthRepository(private val db: AppDatabase) {
                 isAdmin = it.isAdmin,
                 isVerifiedPoet = it.isVerifiedPoet,
                 isLoggedIn = it.isLoggedIn,
-                createdAt = it.createdAt
+                createdAt = it.createdAt,
+                telegramBotToken = it.telegramBotToken,
+                telegramChannelId = it.telegramChannelId
             )
         }
     }

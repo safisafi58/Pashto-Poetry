@@ -16,9 +16,13 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+import com.example.data.model.TelegramPost
+import com.example.data.repository.TelegramRepository
+
 class AdminViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = PoetryRepository(AppDatabase.getDatabase(application))
     private val supabaseApi = SupabaseRestApi()
+    val telegramRepository = TelegramRepository(application)
 
     init {
         viewModelScope.launch {
@@ -46,6 +50,11 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
     val isTestingConnection = MutableStateFlow(false)
     val connectionResult = MutableStateFlow<Boolean?>(null)
 
+    val telegramBotTokenState = MutableStateFlow(telegramRepository.getSavedBotToken())
+    val telegramChannelIdState = MutableStateFlow(telegramRepository.getSavedChannelId())
+    val telegramPosts = MutableStateFlow<List<TelegramPost>>(emptyList())
+    val isFetchingTelegram = MutableStateFlow(false)
+
     val adminStats: StateFlow<AdminStats> = combine(allPoems, pendingPoems, allComments, adminUsers) { all, pending, comments, admins ->
         val totalLikes = all.sumOf { it.likesCount }
         AdminStats(
@@ -56,6 +65,22 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
             totalComments = comments.size
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AdminStats())
+
+    fun saveTelegramConfig(token: String, channelId: String) {
+        telegramRepository.saveConfig(token, channelId)
+        telegramBotTokenState.value = token
+        telegramChannelIdState.value = channelId
+        fetchTelegramPosts(token, channelId)
+    }
+
+    fun fetchTelegramPosts(token: String? = null, channelId: String? = null) {
+        viewModelScope.launch {
+            isFetchingTelegram.value = true
+            val posts = telegramRepository.fetchChannelPosts(token, channelId)
+            telegramPosts.value = posts
+            isFetchingTelegram.value = false
+        }
+    }
 
     fun approvePoem(poemId: String) {
         viewModelScope.launch {
@@ -113,7 +138,7 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun addAdminUser(name: String, email: String, bio: String) {
+    fun addAdminUser(name: String, email: String, bio: String, botToken: String? = null, channelId: String? = null) {
         viewModelScope.launch {
             val adminUser = UserProfile(
                 id = "admin_" + UUID.randomUUID().toString().take(8),
@@ -124,9 +149,15 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
                 isAdmin = true,
                 isVerifiedPoet = true,
                 isLoggedIn = false,
-                createdAt = System.currentTimeMillis()
+                createdAt = System.currentTimeMillis(),
+                telegramBotToken = botToken,
+                telegramChannelId = channelId
             )
             repository.insertUser(adminUser)
+
+            if (!botToken.isNullOrBlank() || !channelId.isNullOrBlank()) {
+                saveTelegramConfig(botToken ?: "", channelId ?: "")
+            }
         }
     }
 

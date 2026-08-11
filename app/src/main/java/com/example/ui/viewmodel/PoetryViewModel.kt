@@ -14,13 +14,21 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Locale
 
+import com.example.data.model.TelegramPost
+import com.example.data.repository.TelegramRepository
+
 class PoetryViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = PoetryRepository(AppDatabase.getDatabase(application))
+    private val telegramRepository = TelegramRepository(application)
 
     val currentUserId = MutableStateFlow("user_default")
 
     val selectedCategory = MutableStateFlow<PoemCategory>(PoemCategory.ALL)
     val searchQuery = MutableStateFlow("")
+
+    val telegramPosts = MutableStateFlow<List<TelegramPost>>(emptyList())
+    val isLoadingTelegram = MutableStateFlow(false)
+    val isTelegramMode = MutableStateFlow(false)
 
     val allApprovedPoems: StateFlow<List<Poem>> = currentUserId.flatMapLatest { userId ->
         repository.getApprovedPoems(userId)
@@ -66,6 +74,16 @@ class PoetryViewModel(application: Application) : AndroidViewModel(application) 
             repository.seedInitialDataIfEmpty()
         }
         initTts()
+        loadTelegramPosts()
+    }
+
+    fun loadTelegramPosts() {
+        viewModelScope.launch {
+            isLoadingTelegram.value = true
+            val posts = telegramRepository.fetchChannelPosts()
+            telegramPosts.value = posts
+            isLoadingTelegram.value = false
+        }
     }
 
     private fun initTts() {

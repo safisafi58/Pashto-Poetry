@@ -59,7 +59,18 @@ data class UserProfile(
     val isAdmin: Boolean = false,
     val isVerifiedPoet: Boolean = false,
     val isLoggedIn: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val telegramBotToken: String? = null,
+    val telegramChannelId: String? = null
+)
+
+data class TelegramPost(
+    val id: String,
+    val text: String,
+    val date: String,
+    val channelName: String,
+    val views: String = "0",
+    val telegramUrl: String? = null
 )
 
 data class AdminStats(

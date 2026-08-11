@@ -169,6 +169,17 @@ fun AdminDashboardScreen(
                         onClick = { selectedTab = 6 },
                         text = { Text("سوبابېس Supabase") }
                     )
+                    Tab(
+                        selected = selectedTab == 7,
+                        onClick = { selectedTab = 7 },
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("تلګرام Telegram")
+                            }
+                        }
+                    )
                 }
 
                 // Tab Content View
@@ -537,6 +548,122 @@ fun AdminDashboardScreen(
                                 }
                             }
                         }
+
+                        7 -> {
+                            // Telegram Integration Section
+                            val botToken by adminViewModel.telegramBotTokenState.collectAsState()
+                            val channelId by adminViewModel.telegramChannelIdState.collectAsState()
+                            val posts by adminViewModel.telegramPosts.collectAsState()
+                            val isFetching by adminViewModel.isFetchingTelegram.collectAsState()
+
+                            var tokenInput by remember(botToken) { mutableStateOf(botToken) }
+                            var channelInput by remember(channelId) { mutableStateOf(channelId) }
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState()),
+                                verticalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Default.Send, contentDescription = null, tint = PashtoGold, modifier = Modifier.size(24.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("د تلګرام چینل تنظیم او بوټ نښلول", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                        }
+
+                                        Text(
+                                            "دلته کولی شئ د خپل تلګرام Bot Token او د چینل نوم (@channel) داخل کړئ ترڅو د تلګرام چینل ټول شعرونه مستقیم په اپلیکیشن کې وښودل شي.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+
+                                        OutlinedTextField(
+                                            value = tokenInput,
+                                            onValueChange = { tokenInput = it },
+                                            label = { Text("Telegram Bot Token") },
+                                            placeholder = { Text("123456789:ABCdef...") },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            singleLine = true
+                                        )
+
+                                        OutlinedTextField(
+                                            value = channelInput,
+                                            onValueChange = { channelInput = it },
+                                            label = { Text("Telegram Channel Username / ID") },
+                                            placeholder = { Text("@pashto_poetry") },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            singleLine = true
+                                        )
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Button(
+                                                onClick = {
+                                                    adminViewModel.saveTelegramConfig(tokenInput, channelInput)
+                                                    Toast.makeText(context, "د تلګرام تنظیمات خوندي شول!", Toast.LENGTH_SHORT).show()
+                                                },
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                Text("خوندي کول او نښلول")
+                                            }
+
+                                            OutlinedButton(
+                                                onClick = { adminViewModel.fetchTelegramPosts(tokenInput, channelInput) }
+                                            ) {
+                                                if (isFetching) {
+                                                    CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                                                } else {
+                                                    Icon(Icons.Default.Refresh, contentDescription = null)
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text("تازه کول")
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Text("د تلګرام چینل فعالې خپرونې (${posts.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+                                if (posts.isEmpty()) {
+                                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                                        Text("هیڅ تلګرام پوسټ ونه موندل شو. د ترلاسه کولو بټن کېکاږئ.", style = MaterialTheme.typography.bodyMedium)
+                                    }
+                                } else {
+                                    posts.forEach { post ->
+                                        Card(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                        ) {
+                                            Column(modifier = Modifier.padding(14.dp)) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(post.channelName, fontWeight = FontWeight.Bold, color = PashtoGold)
+                                                    Text(post.date, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                                                }
+
+                                                Spacer(modifier = Modifier.height(6.dp))
+                                                Text(post.text, style = MaterialTheme.typography.bodyMedium)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -548,8 +675,8 @@ fun AdminDashboardScreen(
         if (showAddAdminDialog) {
             AddAdminDialog(
                 onDismiss = { showAddAdminDialog = false },
-                onAddAdmin = { name, email, bio ->
-                    adminViewModel.addAdminUser(name, email, bio)
+                onAddAdmin = { name, email, bio, botToken, channelId ->
+                    adminViewModel.addAdminUser(name, email, bio, botToken, channelId)
                     Toast.makeText(context, "$name په بریالیتوب سره د اډمین په توګه راجستر شو", Toast.LENGTH_SHORT).show()
                     showAddAdminDialog = false
                 }
@@ -634,6 +761,9 @@ private fun AdminUserItemCard(admin: UserProfile, onDeleteClick: () -> Unit) {
                     if (admin.bio.isNotBlank()) {
                         Text(admin.bio, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
+                    if (!admin.telegramChannelId.isNullOrBlank()) {
+                        Text("تلګرام: ${admin.telegramChannelId}", style = MaterialTheme.typography.labelSmall, color = PashtoGold, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
 
@@ -709,16 +839,24 @@ private fun AdminStatCard(title: String, value: String, icon: androidx.compose.u
 }
 
 @Composable
-private fun AddAdminDialog(onDismiss: () -> Unit, onAddAdmin: (name: String, email: String, bio: String) -> Unit) {
+private fun AddAdminDialog(
+    onDismiss: () -> Unit,
+    onAddAdmin: (name: String, email: String, bio: String, telegramBotToken: String?, telegramChannelId: String?) -> Unit
+) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
+    var botToken by remember { mutableStateOf("") }
+    var channelId by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("نوی اډمین راجستر کړئ", fontWeight = FontWeight.Bold) },
+        title = { Text("نوی اډمین او د تلګرام ټوکن راجستر کړه", fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -739,11 +877,39 @@ private fun AddAdminDialog(onDismiss: () -> Unit, onAddAdmin: (name: String, ema
                     label = { Text("دندې / د مسؤلیت برخه") },
                     modifier = Modifier.fillMaxWidth()
                 )
+                HorizontalDivider()
+                Text("د تلګرام نښلول (Telegram Integration)", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = PashtoGold)
+                OutlinedTextField(
+                    value = botToken,
+                    onValueChange = { botToken = it },
+                    label = { Text("Telegram Bot Token") },
+                    placeholder = { Text("123456789:ABCdef...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = channelId,
+                    onValueChange = { channelId = it },
+                    label = { Text("Telegram Channel Username / ID") },
+                    placeholder = { Text("@pashto_poetry") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
             }
         },
         confirmButton = {
             Button(
-                onClick = { if (name.isNotBlank()) onAddAdmin(name, email, bio) },
+                onClick = {
+                    if (name.isNotBlank()) {
+                        onAddAdmin(
+                            name,
+                            email,
+                            bio,
+                            botToken.ifBlank { null },
+                            channelId.ifBlank { null }
+                        )
+                    }
+                },
                 enabled = name.isNotBlank()
             ) {
                 Text("ثبت کړه")

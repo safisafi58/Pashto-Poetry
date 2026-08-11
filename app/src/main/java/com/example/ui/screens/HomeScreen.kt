@@ -33,6 +33,7 @@ import com.example.R
 import com.example.data.model.Poem
 import com.example.data.model.PoemCategory
 import com.example.data.model.Poet
+import com.example.data.model.TelegramPost
 import com.example.ui.components.PashtoPoemCard
 import com.example.ui.components.RtlLayout
 import com.example.ui.theme.PashtoGold
@@ -53,6 +54,9 @@ fun HomeScreen(
     val poets by viewModel.allPoets.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val telegramPosts by viewModel.telegramPosts.collectAsState()
+    val isTelegramMode by viewModel.isTelegramMode.collectAsState()
+    val isLoadingTelegram by viewModel.isLoadingTelegram.collectAsState()
 
     val context = LocalContext.current
 
@@ -141,10 +145,32 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(vertical = 4.dp)
                     ) {
+                        item {
+                            FilterChip(
+                                selected = isTelegramMode,
+                                onClick = {
+                                    viewModel.isTelegramMode.value = !isTelegramMode
+                                    if (!isTelegramMode) {
+                                        viewModel.loadTelegramPosts()
+                                    }
+                                },
+                                label = { Text("د تلګرام کانال", fontWeight = FontWeight.SemiBold) },
+                                leadingIcon = { Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                                shape = RoundedCornerShape(20.dp),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = PashtoGold,
+                                    selectedLabelColor = Color.Black
+                                )
+                            )
+                        }
+
                         items(PoemCategory.entries.toTypedArray()) { category ->
                             FilterChip(
-                                selected = selectedCategory == category,
-                                onClick = { viewModel.selectedCategory.value = category },
+                                selected = !isTelegramMode && selectedCategory == category,
+                                onClick = {
+                                    viewModel.isTelegramMode.value = false
+                                    viewModel.selectedCategory.value = category
+                                },
                                 label = { Text(category.pashtoName, fontWeight = FontWeight.SemiBold) },
                                 shape = RoundedCornerShape(20.dp),
                                 colors = FilterChipDefaults.filterChipColors(
@@ -300,45 +326,68 @@ fun HomeScreen(
                 // Section Title for Feed
                 item {
                     Text(
-                        text = if (searchQuery.isNotBlank()) "د لټون پایلې" else "نوې او مشهورې غزلې",
+                        text = if (isTelegramMode) "د تلګرام رسمي کانال تازه خپرونې" else if (searchQuery.isNotBlank()) "د لټون پایلې" else "نوې او مشهورې غزلې",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
 
-                // Poems List Feed
-                if (filteredPoems.isEmpty()) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "هیڅ شعر ونه موندل شو.",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                // Feed Items Rendering
+                if (isTelegramMode) {
+                    if (telegramPosts.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (isLoadingTelegram) "د تلګرام خپرونې راروانې دي..." else "هیڅ تلګرام پوسټ ونه موندل شو.",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    } else {
+                        items(telegramPosts, key = { it.id }) { post ->
+                            TelegramPostCard(post = post, context = context)
                         }
                     }
                 } else {
-                    items(filteredPoems, key = { it.id }) { poem ->
-                        PashtoPoemCard(
-                            poem = poem,
-                            onPoemClick = { onPoemClick(poem.id) },
-                            onLikeClick = { viewModel.toggleLike(poem.id, poem.isLikedByMe) },
-                            onFavoriteClick = { viewModel.toggleFavorite(poem.id, poem.isFavoriteByMe) },
-                            onShareClick = {
-                                val shareIntent = android.content.Intent().apply {
-                                    action = android.content.Intent.ACTION_SEND
-                                    putExtra(android.content.Intent.EXTRA_TEXT, "${poem.title}\n\n${poem.content}\n\n— ${poem.poetName}\nد پښتو شعرونو له اپلیکیشن څخه")
-                                    type = "text/plain"
-                                }
-                                context.startActivity(android.content.Intent.createChooser(shareIntent, "شعر شریک کړئ"))
+                    if (filteredPoems.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "هیڅ شعر ونه موندل شو.",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
-                        )
+                        }
+                    } else {
+                        items(filteredPoems, key = { it.id }) { poem ->
+                            PashtoPoemCard(
+                                poem = poem,
+                                onPoemClick = { onPoemClick(poem.id) },
+                                onLikeClick = { viewModel.toggleLike(poem.id, poem.isLikedByMe) },
+                                onFavoriteClick = { viewModel.toggleFavorite(poem.id, poem.isFavoriteByMe) },
+                                onShareClick = {
+                                    val shareIntent = android.content.Intent().apply {
+                                        action = android.content.Intent.ACTION_SEND
+                                        putExtra(android.content.Intent.EXTRA_TEXT, "${poem.title}\n\n${poem.content}\n\n— ${poem.poetName}\nد پښتو شعرونو له اپلیکیشن څخه")
+                                        type = "text/plain"
+                                    }
+                                    context.startActivity(android.content.Intent.createChooser(shareIntent, "شعر شریک کړئ"))
+                                }
+                            )
+                        }
                     }
                 }
 
@@ -447,6 +496,119 @@ private fun HeroSlideCard(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TelegramPostCard(post: TelegramPost, context: android.content.Context) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        shape = CircleShape,
+                        color = PashtoGold.copy(alpha = 0.2f),
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Send,
+                            contentDescription = null,
+                            tint = PashtoGold,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(post.channelName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text("د تلګرام رسمي کانال خپرونه", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Text(
+                        post.date,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = post.text,
+                style = MaterialTheme.typography.bodyLarge,
+                lineHeight = 26.sp,
+                fontWeight = FontWeight.Normal,
+                textAlign = TextAlign.Right
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                post.telegramUrl?.let { url ->
+                    OutlinedButton(
+                        onClick = {
+                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                            context.startActivity(intent)
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("په تلګرام کې خلاصول", style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    IconButton(
+                        onClick = {
+                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText("Telegram Post", post.text)
+                            clipboard.setPrimaryClip(clip)
+                            android.widget.Toast.makeText(context, "پوسټ کاپي شو!", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
+                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy", modifier = Modifier.size(20.dp))
+                    }
+
+                    IconButton(
+                        onClick = {
+                            val shareIntent = android.content.Intent().apply {
+                                action = android.content.Intent.ACTION_SEND
+                                putExtra(android.content.Intent.EXTRA_TEXT, "${post.text}\n\n— د تلګرام له کانال (${post.channelName}) څخه")
+                                type = "text/plain"
+                            }
+                            context.startActivity(android.content.Intent.createChooser(shareIntent, "شریکول"))
+                        }
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = "Share", modifier = Modifier.size(20.dp))
                     }
                 }
             }

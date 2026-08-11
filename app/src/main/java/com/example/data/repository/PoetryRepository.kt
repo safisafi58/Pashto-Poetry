@@ -269,7 +269,9 @@ class PoetryRepository(
                     isAdmin = it.isAdmin,
                     isVerifiedPoet = it.isVerifiedPoet,
                     isLoggedIn = it.isLoggedIn,
-                    createdAt = it.createdAt
+                    createdAt = it.createdAt,
+                    telegramBotToken = it.telegramBotToken,
+                    telegramChannelId = it.telegramChannelId
                 )
             }
         }
@@ -287,7 +289,9 @@ class PoetryRepository(
                     isAdmin = it.isAdmin,
                     isVerifiedPoet = it.isVerifiedPoet,
                     isLoggedIn = it.isLoggedIn,
-                    createdAt = it.createdAt
+                    createdAt = it.createdAt,
+                    telegramBotToken = it.telegramBotToken,
+                    telegramChannelId = it.telegramChannelId
                 )
             }
         }
@@ -312,7 +316,9 @@ class PoetryRepository(
                 isAdmin = user.isAdmin,
                 isVerifiedPoet = user.isVerifiedPoet,
                 isLoggedIn = user.isLoggedIn,
-                createdAt = user.createdAt
+                createdAt = user.createdAt,
+                telegramBotToken = user.telegramBotToken,
+                telegramChannelId = user.telegramChannelId
             )
         )
     }
