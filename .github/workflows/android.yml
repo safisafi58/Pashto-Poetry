@@ -23,6 +23,12 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Decode Debug Keystore
+        run: |
+          if [ -f "debug.keystore.base64" ]; then
+            python3 -c "import base64; open('debug.keystore', 'wb').write(base64.b64decode(open('debug.keystore.base64').read().strip()))"
+          fi
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
