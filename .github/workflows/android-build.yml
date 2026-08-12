@@ -36,7 +36,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build User App Debug APK
-        run: ./gradlew :app:assembleDebug
+        run: gradle :app:assembleDebug
 
       - name: Upload User App APK
         uses: actions/upload-artifact@v4
@@ -46,7 +46,7 @@ jobs:
           if-no-files-found: error
 
       - name: Build Admin App Debug APK
-        run: ./gradlew :admin:assembleDebug
+        run: gradle :admin:assembleDebug
 
       - name: Upload Admin App APK
         uses: actions/upload-artifact@v4
@@ -56,7 +56,7 @@ jobs:
           if-no-files-found: error
 
       - name: Build Admin App Release APK
-        run: ./gradlew :admin:assembleRelease
+        run: gradle :admin:assembleRelease
         continue-on-error: true
 
       - name: Upload Admin Release APK
