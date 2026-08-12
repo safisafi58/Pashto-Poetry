@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
@@ -26,6 +27,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.ui.components.RtlLayout
 import com.example.ui.screens.*
+import com.example.ui.admin.AdminViewModel
+import com.example.ui.admin.AdminDashboardScreen
+import com.example.ui.admin.AdminLoginScreen
 import com.example.ui.theme.PashtoGold
 import com.example.ui.viewmodel.AuthViewModel
 import com.example.ui.viewmodel.PoetryViewModel
@@ -36,6 +40,7 @@ sealed class Screen(val route: String, val title: String? = null, val icon: andr
     object Home : Screen("home", "کور پاڼه", Icons.Default.Home)
     object Favorites : Screen("favorites", "ساتل شوي", Icons.Default.Favorite)
     object AdminsList : Screen("admins_list", "اډمینان", Icons.Default.Shield)
+    object AdminPanel : Screen("admin_panel", "اډمین پینل", Icons.Default.AdminPanelSettings)
     object PoemDetail : Screen("poem_detail/{poemId}") {
         fun createRoute(poemId: String) = "poem_detail/$poemId"
     }
@@ -162,6 +167,23 @@ fun NavGraph(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                     )
 
+                    NavigationDrawerItem(
+                        label = { Text("د اډمین پینل (Admin Panel)", fontWeight = FontWeight.Bold, color = PashtoGold) },
+                        icon = { Icon(Icons.Default.AdminPanelSettings, contentDescription = null, tint = PashtoGold) },
+                        selected = currentRoute == Screen.AdminPanel.route,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            if (currentRoute != Screen.AdminPanel.route) {
+                                navController.navigate(Screen.AdminPanel.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        },
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                    )
+
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp))
 
                     NavigationDrawerItem(
@@ -252,6 +274,23 @@ fun NavGraph(
 
                     composable(Screen.AdminsList.route) {
                         AdminsListScreen(viewModel = poetryViewModel)
+                    }
+
+                    composable(Screen.AdminPanel.route) {
+                        val adminViewModel: AdminViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                        val isAuthenticated by adminViewModel.isAdminAuthenticated.collectAsState()
+
+                        if (isAuthenticated) {
+                            AdminDashboardScreen(
+                                adminViewModel = adminViewModel,
+                                onLogoutClick = { adminViewModel.logoutAdmin() }
+                            )
+                        } else {
+                            AdminLoginScreen(
+                                onLoginSuccess = { },
+                                onAuthenticate = { password -> adminViewModel.authenticateAdmin(password) }
+                            )
+                        }
                     }
 
                     composable(

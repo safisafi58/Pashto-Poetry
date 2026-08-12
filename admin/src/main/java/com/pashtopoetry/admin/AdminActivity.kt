@@ -12,9 +12,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.theme.PashtoPoetryTheme
-import com.pashtopoetry.admin.ui.screens.AdminDashboardScreen
-import com.pashtopoetry.admin.ui.screens.AdminLoginScreen
-import com.pashtopoetry.admin.ui.viewmodel.AdminViewModel
+import com.example.ui.admin.AdminDashboardScreen
+import com.example.ui.admin.AdminLoginScreen
+import com.example.ui.admin.AdminViewModel
 
 class AdminActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
