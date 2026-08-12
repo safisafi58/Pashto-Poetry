@@ -24,4 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "PashtoPoetry"
 
+include(":core")
 include(":app")
+include(":admin")

@@ -9,7 +9,6 @@ import com.example.data.model.Comment
 import com.example.data.model.Poem
 import com.example.data.model.PoemCategory
 import com.example.data.model.Poet
-import com.example.data.model.UserProfile
 import com.example.data.repository.PoetryRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -65,10 +64,6 @@ class PoetryViewModel(application: Application) : AndroidViewModel(application) 
     val allPoets: StateFlow<List<Poet>> = repository.getAllPoets()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val adminUsers: StateFlow<List<UserProfile>> = repository.getAdminUsers()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    // Audio / TTS Recitation state
     val isSpeaking = MutableStateFlow(false)
     val currentPlayingPoemId = MutableStateFlow<String?>(null)
     private var tts: TextToSpeech? = null

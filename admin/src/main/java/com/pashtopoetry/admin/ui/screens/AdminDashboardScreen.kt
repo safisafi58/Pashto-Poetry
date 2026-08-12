@@ -1,9 +1,7 @@
-package com.example.ui.screens
+package com.pashtopoetry.admin.ui.screens
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,13 +27,13 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.UserProfile
 import com.example.ui.components.RtlLayout
 import com.example.ui.theme.PashtoGold
-import com.example.ui.viewmodel.AdminViewModel
+import com.pashtopoetry.admin.ui.viewmodel.AdminViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminDashboardScreen(
     adminViewModel: AdminViewModel,
-    onBackClick: () -> Unit
+    onLogoutClick: () -> Unit
 ) {
     val pendingPoems by adminViewModel.pendingPoems.collectAsState()
     val allPoems by adminViewModel.allPoems.collectAsState()
@@ -44,19 +42,18 @@ fun AdminDashboardScreen(
     val allPoets by adminViewModel.allPoets.collectAsState()
     val adminStats by adminViewModel.adminStats.collectAsState()
 
-    var selectedTab by remember { mutableIntStateOf(0) } // 0: Admins, 1: Quick Add, 2: Approvals, 3: All Poems, 4: Comments, 5: DB Config
+    var selectedTab by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
 
-    // Dialog control states
     var showAddAdminDialog by remember { mutableStateOf(false) }
     var showAddPoetDialog by remember { mutableStateOf(false) }
     var showAddPoemDialog by remember { mutableStateOf(false) }
-    var poemToEdit by remember { mutableStateOf<com.example.data.model.Poem?>(null) }
 
     var urlInput by remember { mutableStateOf(adminViewModel.supabaseUrlState.value) }
     var keyInput by remember { mutableStateOf(adminViewModel.supabaseKeyState.value) }
     val isTesting by adminViewModel.isTestingConnection.collectAsState()
     val connectionResult by adminViewModel.connectionResult.collectAsState()
+    val connectionMessage by adminViewModel.connectionMessage.collectAsState()
 
     RtlLayout {
         Scaffold(
@@ -78,14 +75,14 @@ fun AdminDashboardScreen(
                             }
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
-                                Text("د اډمین درانه مدیریت پینل", fontWeight = FontWeight.Bold, fontSize = 17.sp)
-                                Text("د پښتو شعر او ادبي خپرونو اډمین سیسټم", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("د اډمین پینل (Pashto Admin)", fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                                Text("د پښتو شعر او ادبي خپرونو سمبالښت سیسټم", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    actions = {
+                        IconButton(onClick = onLogoutClick) {
+                            Icon(imageVector = Icons.Default.ExitToApp, contentDescription = "Logout")
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -99,7 +96,6 @@ fun AdminDashboardScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Admin Overview Analytics
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -110,7 +106,6 @@ fun AdminDashboardScreen(
                     AdminStatCard("ټولې خوښونې", "${adminStats.totalLikes}", Icons.Default.ThumbUp, Modifier.weight(1f))
                 }
 
-                // Main Admin Navigation Tabs
                 ScrollableTabRow(
                     selectedTabIndex = selectedTab,
                     edgePadding = 0.dp,
@@ -181,24 +176,11 @@ fun AdminDashboardScreen(
                             }
                         }
                     )
-                    Tab(
-                        selected = selectedTab == 8,
-                        onClick = { selectedTab = 8 },
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("نوټفیکیشنونه FCM")
-                            }
-                        }
-                    )
                 }
 
-                // Tab Content View
                 Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                     when (selectedTab) {
                         0 -> {
-                            // Admins List & Management Section
                             Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
@@ -247,7 +229,6 @@ fun AdminDashboardScreen(
                         }
 
                         1 -> {
-                            // Quick Add Hub: Add Poem, Add Poet, Add Admin
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -283,7 +264,6 @@ fun AdminDashboardScreen(
                         }
 
                         2 -> {
-                            // Poets Management Section
                             Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
@@ -375,7 +355,6 @@ fun AdminDashboardScreen(
                         }
 
                         3 -> {
-                            // Pending Poems Approval List
                             if (pendingPoems.isEmpty()) {
                                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                     Text("هیڅ نوی شعر د تایید په انتظار کې نشته.", style = MaterialTheme.typography.bodyLarge)
@@ -433,7 +412,6 @@ fun AdminDashboardScreen(
                         }
 
                         4 -> {
-                            // All Poems List with Delete & Feature Toggle
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -479,7 +457,6 @@ fun AdminDashboardScreen(
                         }
 
                         5 -> {
-                            // Comments Moderation
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -508,7 +485,6 @@ fun AdminDashboardScreen(
                         }
 
                         6 -> {
-                            // Supabase Database Connection Panel
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -551,10 +527,36 @@ fun AdminDashboardScreen(
                                             }
                                         }
 
-                                        connectionResult?.let { result ->
-                                            val resultText = if (result) "له Supabase سره بريالۍ اړيکه ټينګه شوه!" else "له Supabase سره اړيکه ونه شوه. لطفاً URL او Key وڅېړئ."
-                                            val resultColor = if (result) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
-                                            Text(text = resultText, color = resultColor, fontWeight = FontWeight.Bold)
+                                        connectionMessage?.let { msg ->
+                                            val isSuccess = connectionResult == true
+                                            val resultColor = if (isSuccess) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
+                                            val bgColor = if (isSuccess) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.25f)
+                                            val icon = if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Error
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = CardDefaults.cardColors(containerColor = bgColor),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.padding(14.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = icon,
+                                                        contentDescription = null,
+                                                        tint = resultColor,
+                                                        modifier = Modifier.size(24.dp)
+                                                    )
+                                                    Text(
+                                                        text = msg,
+                                                        color = resultColor,
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -562,7 +564,6 @@ fun AdminDashboardScreen(
                         }
 
                         7 -> {
-                            // Telegram Integration Section
                             val botToken by adminViewModel.telegramBotTokenState.collectAsState()
                             val channelId by adminViewModel.telegramChannelIdState.collectAsState()
                             val posts by adminViewModel.telegramPosts.collectAsState()
@@ -681,9 +682,6 @@ fun AdminDashboardScreen(
             }
         }
 
-        // --- DIALOGS FOR QUICK ADDING EVERYTHING ---
-
-        // 1. Add Admin Dialog
         if (showAddAdminDialog) {
             AddAdminDialog(
                 onDismiss = { showAddAdminDialog = false },
@@ -695,7 +693,6 @@ fun AdminDashboardScreen(
             )
         }
 
-        // 2. Add Poet Dialog
         if (showAddPoetDialog) {
             AddPoetDialog(
                 onDismiss = { showAddPoetDialog = false },
@@ -707,7 +704,6 @@ fun AdminDashboardScreen(
             )
         }
 
-        // 3. Add Poem Dialog
         if (showAddPoemDialog) {
             AddPoemDialog(
                 poetsList = allPoets.map { it.name },

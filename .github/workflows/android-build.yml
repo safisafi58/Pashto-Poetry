@@ -1,4 +1,4 @@
-name: Pashto Poetry App - Android Build
+name: Pashto Poetry Multi-Module Build
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: Build Native Android APKs
+    name: Build Both User and Admin APKs
     runs-on: ubuntu-latest
 
     steps:
@@ -23,6 +23,9 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x gradlew || true
+
       - name: Decode Debug Keystore
         run: |
           if [ -f "debug.keystore.base64" ]; then
@@ -32,23 +35,34 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build Debug APK
-        run: gradle :app:assembleDebug
+      - name: Build User App Debug APK
+        run: ./gradlew :app:assembleDebug
 
-      - name: Upload Debug APK Artifact
+      - name: Upload User App APK
         uses: actions/upload-artifact@v4
         with:
-          name: Pashto-Poetry-App-Debug-APK
+          name: Pashto-Poetry-User-App.apk
           path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: warn
+          if-no-files-found: error
 
-      - name: Build Release APK
-        run: gradle :app:assembleRelease
+      - name: Build Admin App Debug APK
+        run: ./gradlew :admin:assembleDebug
+
+      - name: Upload Admin App APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pashto-Poetry-Admin-App.apk
+          path: admin/build/outputs/apk/debug/admin-debug.apk
+          if-no-files-found: error
+
+      - name: Build Admin App Release APK
+        run: ./gradlew :admin:assembleRelease
         continue-on-error: true
 
-      - name: Upload Release APK Artifact
+      - name: Upload Admin Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: Pashto-Poetry-App-Release-APK
-          path: app/build/outputs/apk/release/*.apk
+          name: Pashto-Poetry-Admin-App-Release
+          path: admin/build/outputs/apk/release/*.apk
           if-no-files-found: ignore
+

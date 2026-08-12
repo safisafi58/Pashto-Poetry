@@ -45,9 +45,8 @@ fun HomeScreen(
     viewModel: PoetryViewModel,
     onPoemClick: (String) -> Unit,
     onPoetClick: (String) -> Unit,
-    onAddPoemClick: () -> Unit,
-    onAdminDashboardClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onOpenDrawer: () -> Unit,
+    onAdminsClick: () -> Unit
 ) {
     val filteredPoems by viewModel.filteredPoems.collectAsState()
     val featuredPoems by viewModel.featuredPoems.collectAsState()
@@ -73,23 +72,14 @@ fun HomeScreen(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = onProfileClick) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Profile",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    },
-                    actions = {
                         IconButton(
-                            onClick = onAdminDashboardClick,
-                            modifier = Modifier.testTag("admin_panel_btn")
+                            onClick = onOpenDrawer,
+                            modifier = Modifier.testTag("drawer_menu_btn")
                         ) {
                             Icon(
-                                imageVector = Icons.Default.AdminPanelSettings,
-                                contentDescription = "Admin Panel",
-                                tint = PashtoGold
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Menu",
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
                     },
@@ -97,16 +87,6 @@ fun HomeScreen(
                         containerColor = MaterialTheme.colorScheme.background
                     )
                 )
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = onAddPoemClick,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.testTag("add_poem_fab")
-                ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add Poem")
-                }
             }
         ) { paddingValues ->
             LazyColumn(
@@ -235,14 +215,14 @@ fun HomeScreen(
                                     }
 
                                     3 -> {
-                                        // Slide 3: Add Poem Call-to-Action
+                                        // Slide 3: Admins List Call-to-Action
                                         HeroSlideCard(
-                                            tagText = "شاعران او مینوال",
-                                            title = "خپل خوندور شعرونه له خلکو سره شریک کړئ!",
-                                            subtitle = "د پښتو شعرونو خزانې ته خپله نوي کلامونه اضافه کړئ",
-                                            excerpt = "تاسو کولی شئ خپل احساسات په لیکلې بڼه دلته خپاره کړئ.",
-                                            buttonText = "شعر خپور کړه",
-                                            onClick = onAddPoemClick
+                                            tagText = "اډمینان او مدیران",
+                                            title = "د اپلیکیشن له مسؤلینو سره اړيکه",
+                                            subtitle = "د پښتو شعرونو د تایید شویو اډمینانو لیست وګورئ",
+                                            excerpt = "په زړه پورې غزلې او شعرونه د باوري مدیرانو له لارې ارزوئ.",
+                                            buttonText = "د اډمینانو لیست",
+                                            onClick = onAdminsClick
                                         )
                                     }
                                 }

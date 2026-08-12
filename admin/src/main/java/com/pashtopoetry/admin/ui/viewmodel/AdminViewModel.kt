@@ -1,4 +1,4 @@
-package com.example.ui.viewmodel
+package com.pashtopoetry.admin.ui.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -12,19 +12,27 @@ import com.example.data.model.UserProfile
 import com.example.data.remote.SupabaseConfig
 import com.example.data.remote.SupabaseRestApi
 import com.example.data.repository.PoetryRepository
+import com.example.data.repository.TelegramRepository
+import com.example.data.model.TelegramPost
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
-
-import com.example.data.model.TelegramPost
-import com.example.data.repository.TelegramRepository
 
 class AdminViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = PoetryRepository(AppDatabase.getDatabase(application))
     private val supabaseApi = SupabaseRestApi()
     val telegramRepository = TelegramRepository(application)
 
+    val supabaseUrlState = MutableStateFlow(SupabaseConfig.supabaseUrl)
+    val supabaseKeyState = MutableStateFlow(SupabaseConfig.supabaseKey)
+    val isTestingConnection = MutableStateFlow(false)
+    val connectionResult = MutableStateFlow<Boolean?>(null)
+    val connectionMessage = MutableStateFlow<String?>(null)
+
     init {
+        SupabaseConfig.init(application)
+        supabaseUrlState.value = SupabaseConfig.supabaseUrl
+        supabaseKeyState.value = SupabaseConfig.supabaseKey
         viewModelScope.launch {
             repository.seedInitialDataIfEmpty()
         }
@@ -45,17 +53,13 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
     val allPoets: StateFlow<List<Poet>> = repository.getAllPoets()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val supabaseUrlState = MutableStateFlow(SupabaseConfig.supabaseUrl)
-    val supabaseKeyState = MutableStateFlow(SupabaseConfig.supabaseKey)
-    val isTestingConnection = MutableStateFlow(false)
-    val connectionResult = MutableStateFlow<Boolean?>(null)
-
     val telegramBotTokenState = MutableStateFlow(telegramRepository.getSavedBotToken())
     val telegramChannelIdState = MutableStateFlow(telegramRepository.getSavedChannelId())
     val telegramPosts = MutableStateFlow<List<TelegramPost>>(emptyList())
     val isFetchingTelegram = MutableStateFlow(false)
 
-    val isAdminAuthenticated = MutableStateFlow(true)
+    val isAdminAuthenticated = MutableStateFlow(false)
+
     val sentNotifications = MutableStateFlow<List<PushNotificationItem>>(
         listOf(
             PushNotificationItem("1", "نوې خپرونه!", "د رحمان بابا خوندوره نوې غزله زیاته شوه.", "ټول کاروونکي", "10 دقیقې وړاندې", "بریالی"),
@@ -73,6 +77,18 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
             totalComments = comments.size
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AdminStats())
+
+    fun authenticateAdmin(password: String): Boolean {
+        if (password == "admin123" || password == "pashto2025" || password == "123456") {
+            isAdminAuthenticated.value = true
+            return true
+        }
+        return false
+    }
+
+    fun logoutAdmin() {
+        isAdminAuthenticated.value = false
+    }
 
     fun saveTelegramConfig(token: String, channelId: String) {
         telegramRepository.saveConfig(token, channelId)
@@ -202,13 +218,22 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
     fun testSupabaseConnection(url: String, key: String) {
         viewModelScope.launch {
             isTestingConnection.value = true
-            val result = supabaseApi.testConnection(url, key)
-            if (result) {
-                SupabaseConfig.supabaseUrl = url
-                SupabaseConfig.supabaseKey = key
-                SupabaseConfig.isConnected = true
+            connectionMessage.value = null
+
+            val cleanUrl = url.trim().removeSuffix("/")
+            val cleanKey = key.trim()
+
+            val result = supabaseApi.testConnectionDetail(cleanUrl, cleanKey)
+            if (result.isSuccess) {
+                SupabaseConfig.saveConfig(getApplication(), cleanUrl, cleanKey)
+                supabaseUrlState.value = cleanUrl
+                supabaseKeyState.value = cleanKey
+                connectionResult.value = true
+                connectionMessage.value = result.errorMessage
+            } else {
+                connectionResult.value = false
+                connectionMessage.value = result.errorMessage
             }
-            connectionResult.value = result
             isTestingConnection.value = false
         }
     }

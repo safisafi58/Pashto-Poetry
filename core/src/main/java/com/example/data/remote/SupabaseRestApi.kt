@@ -66,6 +66,7 @@ class SupabaseRestApi {
             return SupabaseConnectionResult(false, null, "د Supabase URL باید له http:// یا https:// سره پیل شي.")
         }
 
+        // Ping endpoints to verify connection independently of table creation / RLS
         val endpointsToTry = listOf(
             "$cleanUrl/rest/v1/",
             "$cleanUrl/auth/v1/health",
@@ -104,6 +105,7 @@ class SupabaseRestApi {
 
                         lastErrorResult = SupabaseConnectionResult(false, code, parsedError)
 
+                        // If 401 Unauthorized, key is invalid; no need to poll other endpoints
                         if (code == 401) {
                             return lastErrorResult!!
                         }
@@ -160,6 +162,7 @@ class SupabaseRestApi {
                 val poems = mutableListOf<Poem>()
                 for (i in 0 until jsonArray.length()) {
                     val obj = jsonArray.getJSONObject(i)
+                    val authorId = if (obj.has("author_user_id") && !obj.isNull("author_user_id")) obj.getString("author_user_id") else null
                     poems.add(
                         Poem(
                             id = obj.optString("id"),
@@ -168,7 +171,7 @@ class SupabaseRestApi {
                             poetId = obj.optString("poet_id"),
                             poetName = obj.optString("poet_name"),
                             category = obj.optString("category"),
-                            authorUserId = obj.optString("author_user_id", null),
+                            authorUserId = authorId,
                             isApproved = obj.optBoolean("is_approved", true),
                             isFeatured = obj.optBoolean("is_featured", false),
                             likesCount = obj.optInt("likes_count", 0),

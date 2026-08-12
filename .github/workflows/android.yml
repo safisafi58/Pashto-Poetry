@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APKs
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: Build APK
+    name: Build Both APKs
     runs-on: ubuntu-latest
 
     steps:
@@ -32,12 +32,22 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build Debug APK
-        run: gradle :app:assembleDebug
+      - name: Build User App Debug APK
+        run: ./gradlew :app:assembleDebug
 
-      - name: Upload Debug APK Artifact
+      - name: Upload User App Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: Pashto-Poetry-App-Debug-APK
+          name: Pashto-Poetry-User-App.apk
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Build Admin App Debug APK
+        run: ./gradlew :admin:assembleDebug
+
+      - name: Upload Admin App Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pashto-Poetry-Admin-App.apk
+          path: admin/build/outputs/apk/debug/admin-debug.apk
           if-no-files-found: error
