@@ -244,6 +244,20 @@ class PoetryRepository(
         poemDao.updateCommentsCount(comment.poemId, 1)
     }
 
+    suspend fun updatePoem(poemId: String, title: String, poetId: String, poetName: String, category: String, content: String) {
+        val existing = poemDao.getPoemById(poemId)
+        if (existing != null) {
+            val updated = existing.copy(
+                title = title,
+                poetId = poetId,
+                poetName = poetName,
+                category = category,
+                content = content
+            )
+            poemDao.updatePoem(updated)
+        }
+    }
+
     suspend fun insertPoet(poet: Poet) {
         poetDao.insertPoet(
             PoetEntity(

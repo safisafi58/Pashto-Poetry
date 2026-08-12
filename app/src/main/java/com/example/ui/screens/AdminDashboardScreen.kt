@@ -51,6 +51,7 @@ fun AdminDashboardScreen(
     var showAddAdminDialog by remember { mutableStateOf(false) }
     var showAddPoetDialog by remember { mutableStateOf(false) }
     var showAddPoemDialog by remember { mutableStateOf(false) }
+    var poemToEdit by remember { mutableStateOf<com.example.data.model.Poem?>(null) }
 
     var urlInput by remember { mutableStateOf(adminViewModel.supabaseUrlState.value) }
     var keyInput by remember { mutableStateOf(adminViewModel.supabaseKeyState.value) }
@@ -177,6 +178,17 @@ fun AdminDashboardScreen(
                                 Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("تلګرام Telegram")
+                            }
+                        }
+                    )
+                    Tab(
+                        selected = selectedTab == 8,
+                        onClick = { selectedTab = 8 },
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("نوټفیکیشنونه FCM")
                             }
                         }
                     )

@@ -55,6 +55,14 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
     val telegramPosts = MutableStateFlow<List<TelegramPost>>(emptyList())
     val isFetchingTelegram = MutableStateFlow(false)
 
+    val isAdminAuthenticated = MutableStateFlow(true)
+    val sentNotifications = MutableStateFlow<List<PushNotificationItem>>(
+        listOf(
+            PushNotificationItem("1", "نوې خپرونه!", "د رحمان بابا خوندوره نوې غزله زیاته شوه.", "ټول کاروونکي", "10 دقیقې وړاندې", "بریالی"),
+            PushNotificationItem("2", "د تلګرام تازه شعرونه", "د پښتو شعرونو نوي لستونه وګورئ.", "پښتو مینوال", "2 ساعته وړاندې", "بریالی")
+        )
+    )
+
     val adminStats: StateFlow<AdminStats> = combine(allPoems, pendingPoems, allComments, adminUsers) { all, pending, comments, admins ->
         val totalLikes = all.sumOf { it.likesCount }
         AdminStats(
@@ -173,6 +181,24 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updatePoem(poemId: String, title: String, poetId: String, poetName: String, category: String, content: String) {
+        viewModelScope.launch {
+            repository.updatePoem(poemId, title, poetId, poetName, category, content)
+        }
+    }
+
+    fun sendPushNotification(title: String, body: String, topic: String) {
+        val newNotification = PushNotificationItem(
+            id = "notif_" + UUID.randomUUID().toString().take(6),
+            title = title,
+            body = body,
+            targetTopic = topic,
+            sentAt = "همدا اوس",
+            status = "لیږل شوی (FCM)"
+        )
+        sentNotifications.value = listOf(newNotification) + sentNotifications.value
+    }
+
     fun testSupabaseConnection(url: String, key: String) {
         viewModelScope.launch {
             isTestingConnection.value = true
@@ -187,3 +213,12 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 }
+
+data class PushNotificationItem(
+    val id: String,
+    val title: String,
+    val body: String,
+    val targetTopic: String,
+    val sentAt: String,
+    val status: String
+)
