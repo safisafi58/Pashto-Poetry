@@ -29,6 +29,7 @@ class PoetryViewModel(application: Application) : AndroidViewModel(application) 
     val telegramPosts = MutableStateFlow<List<TelegramPost>>(emptyList())
     val isLoadingTelegram = MutableStateFlow(false)
     val isTelegramMode = MutableStateFlow(false)
+    val isRefreshing = MutableStateFlow(false)
 
     val allApprovedPoems: StateFlow<List<Poem>> = currentUserId.flatMapLatest { userId ->
         repository.getApprovedPoems(userId)
@@ -82,6 +83,24 @@ class PoetryViewModel(application: Application) : AndroidViewModel(application) 
             val posts = telegramRepository.fetchChannelPosts()
             telegramPosts.value = posts
             isLoadingTelegram.value = false
+        }
+    }
+
+    fun refreshData() {
+        viewModelScope.launch {
+            isRefreshing.value = true
+            try {
+                if (isTelegramMode.value) {
+                    val posts = telegramRepository.fetchChannelPosts()
+                    telegramPosts.value = posts
+                } else {
+                    repository.syncRemotePoems()
+                }
+            } catch (e: Exception) {
+                // Ignore network errors during refresh
+            } finally {
+                isRefreshing.value = false
+            }
         }
     }
 

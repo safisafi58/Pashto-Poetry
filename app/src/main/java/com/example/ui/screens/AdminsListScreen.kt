@@ -141,7 +141,7 @@ fun AdminsListScreen(
                         }
                     }
                 } else {
-                    items(adminUsers, key = { it.id }) { admin ->
+                    items(adminUsers, key = { it.id.ifEmpty { it.hashCode().toString() } }) { admin ->
                         AdminPublicCard(admin = admin)
                     }
                 }
@@ -181,7 +181,7 @@ private fun AdminPublicCard(admin: UserProfile) {
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                text = admin.name.take(1),
+                                text = if (!admin.name.isNullOrBlank()) admin.name.take(1) else "A",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = PashtoGold
@@ -194,7 +194,7 @@ private fun AdminPublicCard(admin: UserProfile) {
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = admin.name,
+                                text = admin.name ?: "",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp
                             )
@@ -225,7 +225,7 @@ private fun AdminPublicCard(admin: UserProfile) {
                 }
             }
 
-            if (admin.email.isNotBlank()) {
+            if (!admin.email.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -243,7 +243,7 @@ private fun AdminPublicCard(admin: UserProfile) {
                 }
             }
 
-            if (admin.bio.isNotBlank()) {
+            if (!admin.bio.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.Top) {
                     Icon(

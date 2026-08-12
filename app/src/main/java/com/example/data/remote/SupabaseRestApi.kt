@@ -181,7 +181,7 @@ class SupabaseRestApi {
                 poems
             }
         } catch (e: Exception) {
-            Log.e("SupabaseRestApi", "Fetch poems error: ${e.message}")
+            Log.e("SupabaseRestApi", "Fetch poems error: ${e.message}", e)
             emptyList()
         }
     }

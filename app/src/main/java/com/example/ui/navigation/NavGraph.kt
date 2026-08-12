@@ -117,10 +117,12 @@ fun NavGraph(
                         selected = currentRoute == Screen.Home.route,
                         onClick = {
                             scope.launch { drawerState.close() }
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            if (currentRoute != Screen.Home.route) {
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
@@ -132,10 +134,12 @@ fun NavGraph(
                         selected = currentRoute == Screen.Favorites.route,
                         onClick = {
                             scope.launch { drawerState.close() }
-                            navController.navigate(Screen.Favorites.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            if (currentRoute != Screen.Favorites.route) {
+                                navController.navigate(Screen.Favorites.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
@@ -147,10 +151,12 @@ fun NavGraph(
                         selected = currentRoute == Screen.AdminsList.route,
                         onClick = {
                             scope.launch { drawerState.close() }
-                            navController.navigate(Screen.AdminsList.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            if (currentRoute != Screen.AdminsList.route) {
+                                navController.navigate(Screen.AdminsList.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
@@ -183,12 +189,14 @@ fun NavGraph(
                                 NavigationBarItem(
                                     selected = selected,
                                     onClick = {
-                                        navController.navigate(screen.route) {
-                                            popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = true
+                                        if (currentRoute != screen.route) {
+                                            navController.navigate(screen.route) {
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
                                             }
-                                            launchSingleTop = true
-                                            restoreState = true
                                         }
                                     },
                                     icon = {

@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +57,7 @@ fun HomeScreen(
     val telegramPosts by viewModel.telegramPosts.collectAsState()
     val isTelegramMode by viewModel.isTelegramMode.collectAsState()
     val isLoadingTelegram by viewModel.isLoadingTelegram.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     val context = LocalContext.current
 
@@ -89,13 +91,19 @@ fun HomeScreen(
                 )
             }
         ) { paddingValues ->
-            LazyColumn(
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.refreshData() },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                 // Search Bar
                 item {
                     OutlinedTextField(
@@ -377,6 +385,7 @@ fun HomeScreen(
             }
         }
     }
+}
 }
 
 @Composable

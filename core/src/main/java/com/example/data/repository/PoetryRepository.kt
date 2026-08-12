@@ -30,6 +30,30 @@ class PoetryRepository(
         }
     }
 
+    suspend fun syncRemotePoems() {
+        val remotePoems = supabaseApi.fetchRemotePoems()
+        if (remotePoems.isNotEmpty()) {
+            val entities = remotePoems.map { poem ->
+                PoemEntity(
+                    id = poem.id,
+                    title = poem.title,
+                    content = poem.content,
+                    poetId = poem.poetId,
+                    poetName = poem.poetName,
+                    category = poem.category,
+                    authorUserId = poem.authorUserId,
+                    isApproved = poem.isApproved,
+                    isFeatured = poem.isFeatured,
+                    likesCount = poem.likesCount,
+                    favoritesCount = poem.favoritesCount,
+                    commentsCount = poem.commentsCount,
+                    createdAt = poem.createdAt
+                )
+            }
+            poemDao.insertPoems(entities)
+        }
+    }
+
     fun getApprovedPoems(userId: String): Flow<List<Poem>> {
         return combine(
             poemDao.getApprovedPoems(),
