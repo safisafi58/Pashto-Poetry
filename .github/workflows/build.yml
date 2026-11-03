@@ -113,7 +113,7 @@ jobs:
       - name: Build Admin APK
         run: flutter build apk --release --flavor admin --target lib/main_admin.dart
 
-      - name: Package both APKs into one ZIP
+      - name: Prepare the two APK files for one ZIP artifact
         shell: bash
         run: |
           set -euo pipefail
@@ -133,16 +133,16 @@ jobs:
           Install the User APK for readers. The Admin APK requires an authorized Supabase account with app_metadata.role = admin.
           Minimum Android version: Android 7.0 (API 24).
           EOF
-          cd release
-          zip -9 Pashto-Poetry-Two-Apps.zip Pashto-Poetry-User.apk Pashto-Poetry-Admin.apk README.txt
-          unzip -t Pashto-Poetry-Two-Apps.zip
-          ls -lh Pashto-Poetry-Two-Apps.zip Pashto-Poetry-User.apk Pashto-Poetry-Admin.apk
+          ls -lh release/
 
-      - name: Upload one ZIP containing both apps
+      - name: Upload one ZIP artifact containing both apps
         uses: actions/upload-artifact@v4
         with:
-          name: Pashto-Poetry-Two-Apps-ZIP
-          path: release/Pashto-Poetry-Two-Apps.zip
+          name: Pashto-Poetry-Two-Apps
+          path: |
+            release/Pashto-Poetry-User.apk
+            release/Pashto-Poetry-Admin.apk
+            release/README.txt
           if-no-files-found: error
           compression-level: 0
           retention-days: 30
