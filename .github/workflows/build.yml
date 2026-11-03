@@ -65,7 +65,7 @@ jobs:
           elif groovy.exists():
               p = groovy
               s = p.read_text()
-              if "create("user")" not in s and "user {" not in s:
+              if 'user {' not in s and 'create("user")' not in s:
                   block = '''
               flavorDimensions "app"
               productFlavors {
