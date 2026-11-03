@@ -19,10 +19,10 @@ class _HomePageState extends State<HomePage>{
  @override void dispose(){searchCtrl.dispose();super.dispose();}
  Future<void> loadFavorites()async{final p=await SharedPreferences.getInstance();if(mounted)setState(()=>favorites.addAll(p.getStringList('favorite_poems')??[]));}
  Future<void> load()async{
-  if(mounted)setState(()=>{loading=true,error=null});
+  if(mounted)setState(() { loading = true; error = null; });
   try{final r=await Future.wait([supabase.from('poetry_categories').select().order('sort_order'),supabase.from('poems').select('id,title,poet_name,poem_text,category_id,tags,is_featured,created_at').eq('is_published',true).order('created_at',ascending:false)]);
-   if(!mounted)return;setState(()=>{categories=List<Map<String,dynamic>>.from(r[0]),poems=List<Map<String,dynamic>>.from(r[1]),loading=false});
-  }catch(_){if(mounted)setState(()=>{loading=false,error='له سرور سره اړیکه ټینګه نه شوه. انټرنېټ وګورئ.'});}
+   if(!mounted)return;setState(() { categories = List<Map<String,dynamic>>.from(r[0]); poems = List<Map<String,dynamic>>.from(r[1]); loading = false; });
+  }catch(_){if(mounted)setState(() { loading = false; error = 'له سرور سره اړیکه ټینګه نه شوه. انټرنېټ وګورئ.'; });}
  }
  Future<void> toggle(String id)async{setState(()=>favorites.contains(id)?favorites.remove(id):favorites.add(id));final p=await SharedPreferences.getInstance();await p.setStringList('favorite_poems',favorites.toList());}
  List<Map<String,dynamic>> get shown{Iterable<Map<String,dynamic>> x=poems;if(tab==2)x=x.where((p)=>favorites.contains(p['id'].toString()));if(tab==1&&category!='all')x=x.where((p)=>p['category_id']?.toString()==category);if(search.trim().isNotEmpty){final q=search.toLowerCase().trim();x=x.where((p)=>['title','poet_name','poem_text'].any((k)=>(p[k]??'').toString().toLowerCase().contains(q)));}return x.toList();}
@@ -58,7 +58,7 @@ class _HomePageState extends State<HomePage>{
  ])));
  Widget empty(String s,Future<void> Function() retry)=>Center(child:Padding(padding:const EdgeInsets.all(28),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[const Icon(Icons.auto_stories_outlined,color:gold,size:45),const SizedBox(height:12),Text(s,textAlign:TextAlign.center,style:const TextStyle(color:ink,height:1.8)),const SizedBox(height:14),TextButton(onPressed:retry,child:const Text('بیا هڅه وکړئ',style:TextStyle(color:ink)))])));
  Widget bottomBar()=>Container(padding:const EdgeInsets.fromLTRB(14,9,14,12),decoration:const BoxDecoration(color:ink,borderRadius:BorderRadius.vertical(top:Radius.circular(22))),child:Row(children:[nav(0,Icons.auto_stories_outlined,'شعرونه'),nav(1,Icons.grid_view_rounded,'کټګورۍ'),nav(2,Icons.favorite_border,'خوښې')]));
- Widget nav(int n,IconData i,String t)=>Expanded(child:GestureDetector(onTap:()=>setState(()=>{tab=n,category='all'}),child:Container(padding:const EdgeInsets.symmetric(vertical:8),decoration:BoxDecoration(color:tab==n?Colors.white.withOpacity(.08):Colors.transparent,borderRadius:BorderRadius.circular(13)),child:Column(mainAxisSize:MainAxisSize.min,children:[Icon(i,color:tab==n?gold:Colors.white60,size:21),const SizedBox(height:4),Text(t,style:TextStyle(color:tab==n?gold:Colors.white60,fontSize:10,fontWeight:FontWeight.bold))]))));
+ Widget nav(int n,IconData i,String t)=>Expanded(child:GestureDetector(onTap:()=>setState(() { tab = n; category = 'all'; }),child:Container(padding:const EdgeInsets.symmetric(vertical:8),decoration:BoxDecoration(color:tab==n?Colors.white.withOpacity(.08):Colors.transparent,borderRadius:BorderRadius.circular(13)),child:Column(mainAxisSize:MainAxisSize.min,children:[Icon(i,color:tab==n?gold:Colors.white60,size:21),const SizedBox(height:4),Text(t,style:TextStyle(color:tab==n?gold:Colors.white60,fontSize:10,fontWeight:FontWeight.bold))]))));
 }
 
 class PoemPage extends StatefulWidget{final Map<String,dynamic> poem;final bool liked;final VoidCallback onLike;const PoemPage({super.key,required this.poem,required this.liked,required this.onLike});@override State<PoemPage> createState()=>_PoemPageState();}
@@ -71,7 +71,7 @@ class _PoemPageState extends State<PoemPage>{late bool liked;@override void init
 class AccountPage extends StatefulWidget{const AccountPage({super.key});@override State<AccountPage> createState()=>_AccountPageState();}
 class _AccountPageState extends State<AccountPage>{
  @override Widget build(BuildContext context){final u=supabase.auth.currentUser;return Directionality(textDirection:TextDirection.rtl,child:Scaffold(backgroundColor:paper,appBar:AppBar(backgroundColor:ink,title:const Text('زما حساب',style:TextStyle(color:paper)),iconTheme:const IconThemeData(color:gold)),body:Padding(padding:const EdgeInsets.all(22),child:Column(children:[
-  const SizedBox(height:25),Container(width:78,height:78,decoration:BoxDecoration(color:ink,borderRadius:BorderRadius.circular(25)),child:const Icon(Icons.person,color:gold,size:42)),const SizedBox(height:14),Text(u?.email??'مېلمه کاروونکی',style:const TextStyle(color:ink,fontSize:18,fontWeight:FontWeight.w900)),const SizedBox(height:7),Text(u==null?'بې له حسابه هم شعرونه لوستلی شئ':(admin?'اډمین حساب':'عادي کاروونکی'),style:const TextStyle(color:muted,fontSize:12)),const SizedBox(height:27),
+  const SizedBox(height:25),Container(width:78,height:78,decoration:BoxDecoration(color:ink,borderRadius:BorderRadius.circular(25)),child:const Icon(Icons.person,color:gold,size:42)),const SizedBox(height:14),Text(u?.email??'مېلمه کاروونکی',style:const TextStyle(color:ink,fontSize:18,fontWeight:FontWeight.w900)),const SizedBox(height:7),Text(u==null?'بې له حسابه هم شعرونه لوستلی شئ':'کاروونکی حساب',style:const TextStyle(color:muted,fontSize:12)),const SizedBox(height:27),
   if(u==null)action('ننوتل یا نوی حساب جوړول',Icons.login,()async{await Navigator.push(context,MaterialPageRoute(builder:(_)=>const AuthPage()));if(mounted)setState((){});})
   else ...[action('له حسابه وتل',Icons.logout,()async{await supabase.auth.signOut();if(mounted)setState((){});})],
   const Spacer(),const Text('پښتو شاعري • د پښتو ادب لپاره',style:TextStyle(color:muted,fontSize:11))
@@ -82,13 +82,13 @@ class AuthPage extends StatefulWidget{const AuthPage({super.key});@override Stat
 class _AuthPageState extends State<AuthPage>{
  final email=TextEditingController(),password=TextEditingController();bool signup=false,busy=false;String? message;
  @override void dispose(){email.dispose();password.dispose();super.dispose();}
- Future<void> submit()async{if(email.text.trim().isEmpty||password.text.length<6){setState(()=>message='برېښنالیک او لږ تر لږه ۶ توري پټنوم ولیکئ.');return;}setState(()=>{busy=true,message=null});
+ Future<void> submit()async{if(email.text.trim().isEmpty||password.text.length<6){setState(()=>message='برېښنالیک او لږ تر لږه ۶ توري پټنوم ولیکئ.');return;}setState(() { busy = true; message = null; });
   try{if(signup){final r=await supabase.auth.signUp(email:email.text.trim(),password:password.text);if(r.session!=null&&mounted)Navigator.pop(context);else if(mounted)setState(()=>message='حساب جوړ شو؛ که د ایمیل تایید فعال وي، ایمیل تایید کړئ.');}else{await supabase.auth.signInWithPassword(email:email.text.trim(),password:password.text);if(mounted)Navigator.pop(context);}}
   on AuthException catch(e){if(mounted)setState(()=>message=e.message);}catch(_){if(mounted)setState(()=>message='اړیکه ناکامه شوه. بیا هڅه وکړئ.');}finally{if(mounted)setState(()=>busy=false);}
  }
  @override Widget build(BuildContext context)=>Directionality(textDirection:TextDirection.rtl,child:Scaffold(backgroundColor:paper,appBar:AppBar(backgroundColor:ink,title:const Text('کاروونکي حساب',style:TextStyle(color:paper)),iconTheme:const IconThemeData(color:gold)),body:ListView(padding:const EdgeInsets.all(22),children:[
   const SizedBox(height:25),const Icon(Icons.menu_book,color:gold,size:50),const SizedBox(height:12),Text(signup?'نوی حساب جوړ کړئ':'بېرته ښه راغلاست',textAlign:TextAlign.center,style:const TextStyle(color:ink,fontSize:23,fontWeight:FontWeight.w900)),const SizedBox(height:25),
-  field(email,'برېښنالیک',false),const SizedBox(height:12),field(password,'پټنوم (لږ تر لږه ۶ توري)',true),if(message!=null)Padding(padding:const EdgeInsets.only(top:12),child:Text(message!,style:const TextStyle(color:Color(0xFF9A4B3E),fontSize:12))),const SizedBox(height:20),darkButton(busy?'مهرباني وکړئ...':(signup?'حساب جوړول':'ننوتل'),busy?null:submit),TextButton(onPressed:busy?null:()=>setState(()=>{signup=!signup,message=null}),child:Text(signup?'مخکې حساب لرئ؟ ننوتل':'نوی حساب جوړ کړئ',style:const TextStyle(color:Color(0xFF806438))))
+  field(email,'برېښنالیک',false),const SizedBox(height:12),field(password,'پټنوم (لږ تر لږه ۶ توري)',true),if(message!=null)Padding(padding:const EdgeInsets.only(top:12),child:Text(message!,style:const TextStyle(color:Color(0xFF9A4B3E),fontSize:12))),const SizedBox(height:20),darkButton(busy?'مهرباني وکړئ...':(signup?'حساب جوړول':'ننوتل'),busy?null:submit),TextButton(onPressed:busy?null:()=>setState(() { signup = !signup; message = null; }),child:Text(signup?'مخکې حساب لرئ؟ ننوتل':'نوی حساب جوړ کړئ',style:const TextStyle(color:Color(0xFF806438))))
  ])));
  Widget field(TextEditingController c,String hint,bool secret)=>TextField(controller:c,obscureText:secret,textDirection:TextDirection.ltr,decoration:InputDecoration(hintText:hint,filled:true,fillColor:const Color(0xFFFFFCF6),prefixIcon:Icon(secret?Icons.lock_outline:Icons.email_outlined,color:gold),border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide.none)));
 }
@@ -97,7 +97,7 @@ class AdminPage extends StatefulWidget{final Future<void> Function()? onLogout;c
 class _AdminPageState extends State<AdminPage>{
  List<Map<String,dynamic>> poems=[],cats=[];bool busy=true;String? error;
  @override void initState(){super.initState();load();}
- Future<void> load()async{setState(()=>{busy=true,error=null});try{final r=await Future.wait([supabase.from('poems').select().order('created_at',ascending:false),supabase.from('poetry_categories').select().order('sort_order')]);if(mounted)setState(()=>{poems=List<Map<String,dynamic>>.from(r[0]),cats=List<Map<String,dynamic>>.from(r[1]),busy=false});}catch(_){if(mounted)setState(()=>{busy=false,error='د اډمین لاسرسی یا د ډیټابېس اجازه وګورئ.'});}}
+ Future<void> load()async{setState(() { busy = true; error = null; });try{final r=await Future.wait([supabase.from('poems').select().order('created_at',ascending:false),supabase.from('poetry_categories').select().order('sort_order')]);if(mounted)setState(() { poems = List<Map<String,dynamic>>.from(r[0]); cats = List<Map<String,dynamic>>.from(r[1]); busy = false; });}catch(_){if(mounted)setState(() { busy = false; error = 'د اډمین لاسرسی یا د ډیټابېس اجازه وګورئ.'; });}}
  void msg(String s)=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s)));
  Future<void> edit([Map<String,dynamic>? p])async{
   final title=TextEditingController(text:p?['title']?.toString()??''),poet=TextEditingController(text:p?['poet_name']?.toString()??''),body=TextEditingController(text:p?['poem_text']?.toString()??''),tags=TextEditingController(text:(p?['tags'] as List?)?.join(', ')??'');
