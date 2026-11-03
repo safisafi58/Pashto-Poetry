@@ -11,12 +11,12 @@ Both apps use a custom charcoal, parchment and antique-gold interface with Pasht
 
 ## Build and download
 
-GitHub Actions builds both release APKs separately, then places them together into one ZIP file named **Pashto-Poetry-Two-Apps.zip**.
+GitHub Actions builds both release APKs separately and uploads them as one downloadable ZIP artifact named **Pashto-Poetry-Two-Apps**. GitHub packages the two APKs together in that single ZIP download.
 
 1. Open the repository's **Actions** tab.
 2. Open the latest successful **Build Pashto Poetry - Two APKs in One ZIP** run.
 3. Download the single artifact named **Pashto-Poetry-Two-Apps-ZIP**.
-4. Extract the ZIP. It contains:
+4. Extract the downloaded ZIP once. It contains:
    - `Pashto-Poetry-User.apk`
    - `Pashto-Poetry-Admin.apk`
    - `README.txt`
