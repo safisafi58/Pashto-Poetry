@@ -99,16 +99,120 @@ class _AdminPageState extends State<AdminPage>{
  @override void initState(){super.initState();load();}
  Future<void> load()async{setState(() { busy = true; error = null; });try{final r=await Future.wait([supabase.from('poems').select().order('created_at',ascending:false),supabase.from('poetry_categories').select().order('sort_order')]);if(mounted)setState(() { poems = List<Map<String,dynamic>>.from(r[0]); cats = List<Map<String,dynamic>>.from(r[1]); busy = false; });}catch(_){if(mounted)setState(() { busy = false; error = 'د اډمین لاسرسی یا د ډیټابېس اجازه وګورئ.'; });}}
  void msg(String s)=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s)));
- Future<void> edit([Map<String,dynamic>? p])async{
-  final title=TextEditingController(text:p?['title']?.toString()??''),poet=TextEditingController(text:p?['poet_name']?.toString()??''),body=TextEditingController(text:p?['poem_text']?.toString()??''),tags=TextEditingController(text:(p?['tags'] as List?)?.join(', ')??'');
-  String? cat=p?['category_id']?.toString();if(cat!=null&&!cats.any((c)=>c['id'].toString()==cat))cat=null;bool featured=p?['is_featured']==true,published=p?['is_published']!=false;
-  final ok=await showDialog<bool>(context:context,builder:(ctx)=>StatefulBuilder(builder:(ctx,refresh)=>Directionality(textDirection:TextDirection.rtl,child:AlertDialog(backgroundColor:paper,shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(20)),title:Text(p==null?'نوی شعر':'شعر سمول',style:const TextStyle(color:ink,fontWeight:FontWeight.w900)),content:SizedBox(width:420,child:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
-   adminField(title,'د شعر سرلیک'),const SizedBox(height:9),adminField(poet,'د شاعر نوم'),const SizedBox(height:9),adminField(body,'د شعر متن',7),const SizedBox(height:9),adminField(tags,'ټګونه په کامه جلا کړئ'),const SizedBox(height:9),
-   DropdownButtonFormField<String>(initialValue:cat,isExpanded:true,decoration:adminDecoration('کټګوري'),items:cats.map((c)=>DropdownMenuItem(value:c['id'].toString(),child:Text(c['name'].toString()))).toList(),onChanged:(v)=>refresh(()=>cat=v)),
-   CheckboxListTile(contentPadding:EdgeInsets.zero,title:const Text('غوره شوی شعر'),value:featured,onChanged:(v)=>refresh(()=>featured=v??false)),CheckboxListTile(contentPadding:EdgeInsets.zero,title:const Text('شعر خپور شي'),value:published,onChanged:(v)=>refresh(()=>published=v??false))
-  ]))),actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('لغوه')),TextButton(onPressed:()=>Navigator.pop(ctx,title.text.trim().isNotEmpty&&body.text.trim().isNotEmpty),child:const Text('ثبتول'))])));
-  if(ok==true){try{final data={'title':title.text.trim(),'poet_name':poet.text.trim(),'poem_text':body.text.trim(),'category_id':cat,'tags':tags.text.split(',').map((x)=>x.trim()).where((x)=>x.isNotEmpty).toList(),'is_featured':featured,'is_published':published,'updated_at':DateTime.now().toUtc().toIso8601String()};if(p==null){await supabase.from('poems').insert(data);}else{await supabase.from('poems').update(data).eq('id',p['id']);}await load();if(mounted)msg('شعر ثبت شو.');}catch(_){if(mounted)msg('ثبت ناکام شو؛ د اډمین اجازه وګورئ.');}}
-  title.dispose();poet.dispose();body.dispose();tags.dispose();
+ Future<void> edit([Map<String,dynamic>? p]) async {
+  final title = TextEditingController(text: p?['title']?.toString() ?? '');
+  final poet = TextEditingController(text: p?['poet_name']?.toString() ?? '');
+  final body = TextEditingController(text: p?['poem_text']?.toString() ?? '');
+  final tags = TextEditingController(
+    text: (p?['tags'] as List?)?.join(', ') ?? '',
+  );
+  String? cat = p?['category_id']?.toString();
+  if (cat != null && !cats.any((c) => c['id'].toString() == cat)) {
+    cat = null;
+  }
+  bool featured = p?['is_featured'] == true;
+  bool published = p?['is_published'] != false;
+
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, refresh) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: paper,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            p == null ? 'نوی شعر' : 'شعر سمول',
+            style: const TextStyle(color: ink, fontWeight: FontWeight.w900),
+          ),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  adminField(title, 'د شعر سرلیک'),
+                  const SizedBox(height: 9),
+                  adminField(poet, 'د شاعر نوم'),
+                  const SizedBox(height: 9),
+                  adminField(body, 'د شعر متن', 7),
+                  const SizedBox(height: 9),
+                  adminField(tags, 'ټګونه په کامه جلا کړئ'),
+                  const SizedBox(height: 9),
+                  DropdownButtonFormField<String>(
+                    initialValue: cat,
+                    isExpanded: true,
+                    decoration: adminDecoration('کټګوري'),
+                    items: cats.map((c) => DropdownMenuItem<String>(
+                      value: c['id'].toString(),
+                      child: Text(c['name'].toString()),
+                    )).toList(),
+                    onChanged: (v) => refresh(() => cat = v),
+                  ),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('غوره شوی شعر'),
+                    value: featured,
+                    onChanged: (v) => refresh(() => featured = v ?? false),
+                  ),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('شعر خپور شي'),
+                    value: published,
+                    onChanged: (v) => refresh(() => published = v ?? false),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('لغوه'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(
+                ctx,
+                title.text.trim().isNotEmpty && body.text.trim().isNotEmpty,
+              ),
+              child: const Text('ثبتول'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  if (ok == true) {
+    try {
+      final data = {
+        'title': title.text.trim(),
+        'poet_name': poet.text.trim(),
+        'poem_text': body.text.trim(),
+        'category_id': cat,
+        'tags': tags.text.split(',').map((x) => x.trim())
+            .where((x) => x.isNotEmpty).toList(),
+        'is_featured': featured,
+        'is_published': published,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      };
+      if (p == null) {
+        await supabase.from('poems').insert(data);
+      } else {
+        await supabase.from('poems').update(data).eq('id', p['id']);
+      }
+      await load();
+      if (mounted) msg('شعر ثبت شو.');
+    } catch (_) {
+      if (mounted) msg('ثبت ناکام شو؛ د اډمین اجازه وګورئ.');
+    }
+  }
+  title.dispose();
+  poet.dispose();
+  body.dispose();
+  tags.dispose();
  }
  Future<bool> confirm(String s)async=>await showDialog<bool>(context:context,builder:(ctx)=>Directionality(textDirection:TextDirection.rtl,child:AlertDialog(backgroundColor:paper,title:Text(s),actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('نه')),TextButton(onPressed:()=>Navigator.pop(ctx,true),child:const Text('هو، حذف یې کړه'))])))??false;
  Future<void> removePoem(Map<String,dynamic> p)async{if(!await confirm('دا شعر حذف شي؟'))return;try{await supabase.from('poems').delete().eq('id',p['id']);await load();}catch(_){msg('حذف ناکام شو.');}}
@@ -122,7 +226,7 @@ class _AdminPageState extends State<AdminPage>{
     ...poems.map((p)=>Container(margin:const EdgeInsets.only(bottom:8),padding:const EdgeInsets.all(12),decoration:BoxDecoration(color:const Color(0xFFFFFCF6),borderRadius:BorderRadius.circular(15)),child:Row(children:[const Icon(Icons.article_outlined,color:gold),const SizedBox(width:8),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(p['title'].toString(),style:const TextStyle(color:ink,fontWeight:FontWeight.bold)),Text(p['is_published']==true?'خپور شوی':'پټ شوی',style:const TextStyle(color:muted,fontSize:10))])),IconButton(onPressed:()=>edit(p),icon:const Icon(Icons.edit_outlined,color:Color(0xFF806438))),IconButton(onPressed:()=>removePoem(p),icon:const Icon(Icons.delete_outline,color:Colors.redAccent))]))),
     const SizedBox(height:20),Row(children:[const Text('کټګورۍ',style:TextStyle(color:ink,fontSize:19,fontWeight:FontWeight.w900)),const Spacer(),TextButton.icon(onPressed:addCategory,icon:const Icon(Icons.add,color:gold),label:const Text('نوې کټګوري',style:TextStyle(color:ink)))]),
     ...cats.map((c)=>Container(margin:const EdgeInsets.only(bottom:7),padding:const EdgeInsets.symmetric(horizontal:13,vertical:8),decoration:BoxDecoration(color:const Color(0xFFFFFCF6),borderRadius:BorderRadius.circular(13)),child:Row(children:[const Icon(Icons.folder_outlined,color:gold),const SizedBox(width:8),Expanded(child:Text(c['name'].toString(),style:const TextStyle(color:ink,fontWeight:FontWeight.bold))),IconButton(onPressed:()=>removeCat(c),icon:const Icon(Icons.delete_outline,color:Colors.redAccent))]))),const SizedBox(height:70)
-   ]));}
+   ])));}
  Widget stat(String label,String value)=>Expanded(child:Column(children:[Text(value,style:const TextStyle(color:gold,fontSize:23,fontWeight:FontWeight.w900)),Text(label,style:const TextStyle(color:paper,fontSize:10))]));
 }
 Widget adminField(TextEditingController c,String label,[int lines=1])=>TextField(controller:c,maxLines:lines,textDirection:TextDirection.rtl,decoration:adminDecoration(label));
