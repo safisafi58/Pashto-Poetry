@@ -112,7 +112,6 @@ class _PoetryHomeState extends State<PoetryHome> {
 
   @override
   Widget build(BuildContext context) {
-    final titles = ['شعرونه', 'کټګورۍ', 'زما خوښې'];
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
