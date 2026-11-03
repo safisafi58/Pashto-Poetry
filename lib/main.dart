@@ -123,6 +123,7 @@ class _PoetryHomeState extends State<PoetryHome> {
           onRefresh: _loadData,
           child: CustomScrollView(slivers: [
             SliverToBoxAdapter(child: _header()),
+            if (tab == 0 && query.isEmpty) SliverToBoxAdapter(child: _featuredSection()),
             SliverToBoxAdapter(child: _search()),
             if (tab == 1) SliverToBoxAdapter(child: _categoryChips()),
             SliverToBoxAdapter(child: Padding(
@@ -174,6 +175,62 @@ class _PoetryHomeState extends State<PoetryHome> {
     ]),
   );
 
+  void _openPoem(Map<String, dynamic> poem) {
+    final id = poem['id'].toString();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => PoemDetail(
+      poem: poem,
+      initiallyLiked: favorites.contains(id),
+      onFavorite: () => _toggleFavorite(id),
+    )));
+  }
+
+  Widget _featuredSection() {
+    final featured = poems.where((p) => p['is_featured'] == true).take(5).toList();
+    if (featured.isEmpty) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Padding(
+        padding: EdgeInsets.fromLTRB(18, 20, 18, 10),
+        child: Row(children: [
+          Icon(Icons.auto_awesome_rounded, color: Color(0xFF28745A), size: 20),
+          SizedBox(width: 8),
+          Text('غوره شوي شعرونه', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ]),
+      ),
+      SizedBox(
+        height: 154,
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          itemCount: featured.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          itemBuilder: (context, index) {
+            final poem = featured[index];
+            return SizedBox(
+              width: 260,
+              child: Card(
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () => _openPoem(poem),
+                  child: Padding(
+                    padding: const EdgeInsets.all(15),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const Icon(Icons.format_quote_rounded, color: Color(0xFF28745A)),
+                      const SizedBox(height: 5),
+                      Text((poem['title'] ?? 'غوره شوی شعر').toString(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 5),
+                      Expanded(child: Text((poem['poem_text'] ?? '').toString(), maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(height: 1.7))),
+                      Text((poem['poet_name'] ?? 'نامعلوم شاعر').toString(), style: const TextStyle(color: Color(0xFF28745A), fontSize: 12, fontWeight: FontWeight.w600)),
+                    ]),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    ]);
+  }
+
   Widget _search() => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     child: TextField(
@@ -214,7 +271,7 @@ class _PoetryHomeState extends State<PoetryHome> {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PoemDetail(poem: poem, liked: liked, onFavorite: () => _toggleFavorite(id)))),
+        onTap: () => _openPoem(poem),
         child: Padding(
           padding: const EdgeInsets.all(17),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -251,14 +308,28 @@ class _PoetryHomeState extends State<PoetryHome> {
   );
 }
 
-class PoemDetail extends StatelessWidget {
+class PoemDetail extends StatefulWidget {
   final Map<String, dynamic> poem;
-  final bool liked;
+  final bool initiallyLiked;
   final VoidCallback onFavorite;
-  const PoemDetail({super.key, required this.poem, required this.liked, required this.onFavorite});
+  const PoemDetail({super.key, required this.poem, required this.initiallyLiked, required this.onFavorite});
+
+  @override
+  State<PoemDetail> createState() => _PoemDetailState();
+}
+
+class _PoemDetailState extends State<PoemDetail> {
+  late bool liked;
+
+  @override
+  void initState() {
+    super.initState();
+    liked = widget.initiallyLiked;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final poem = widget.poem;
     final title = (poem['title'] ?? '').toString();
     final poet = (poem['poet_name'] ?? 'نامعلوم شاعر').toString();
     final body = (poem['poem_text'] ?? '').toString();
@@ -268,7 +339,7 @@ class PoemDetail extends StatelessWidget {
         appBar: AppBar(
           title: const Text('د شعر لوستل'),
           actions: [
-            IconButton(onPressed: onFavorite, icon: Icon(liked ? Icons.favorite : Icons.favorite_border, color: liked ? Colors.red : null)),
+            IconButton(onPressed: () { setState(() => liked = !liked); widget.onFavorite(); }, icon: Icon(liked ? Icons.favorite : Icons.favorite_border, color: liked ? Colors.red : null)),
             IconButton(onPressed: () { Clipboard.setData(ClipboardData(text: '$title\n\n$body\n\n$poet')); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('شعر کاپي شو'))); }, icon: const Icon(Icons.copy)),
             IconButton(onPressed: () => Share.share('$title\n\n$body\n\n$poet'), icon: const Icon(Icons.share)),
           ],
