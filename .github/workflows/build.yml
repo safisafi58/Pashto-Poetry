@@ -1,4 +1,4 @@
-name: Build Pashto Poetry APK
+name: Build Pashto Poetry - User and Admin APKs
 
 on:
   push:
@@ -27,33 +27,90 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate Android platform scaffold
+      - name: Generate Android scaffold
         run: |
           if [ ! -d android ]; then
             flutter create --platforms=android --org com.safisafi.pashtopoetry --project-name pashto_poetry /tmp/poetry_scaffold
             cp -R /tmp/poetry_scaffold/android ./android
           fi
 
-      - name: Configure minimum Android SDK
+      - name: Configure Android flavors and minimum SDK
         run: |
-          if [ -f android/app/build.gradle.kts ]; then
-            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/' android/app/build.gradle.kts
-          elif [ -f android/app/build.gradle ]; then
-            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' android/app/build.gradle
-          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          kts = Path("android/app/build.gradle.kts")
+          groovy = Path("android/app/build.gradle")
+          if kts.exists():
+              p = kts
+              s = p.read_text()
+              if 'create("user")' not in s:
+                  block = '''
+              flavorDimensions += "app"
+              productFlavors {
+                  create("user") {
+                      dimension = "app"
+                      applicationIdSuffix = ".user"
+                      resValue("string", "app_name", "Pashto Poetry")
+                  }
+                  create("admin") {
+                      dimension = "app"
+                      applicationIdSuffix = ".admin"
+                      resValue("string", "app_name", "Pashto Poetry Admin")
+                  }
+              }
+          '''
+                  s = s.replace("android {", "android {\n" + block, 1)
+              s = s.replace("minSdk = flutter.minSdkVersion", "minSdk = 24")
+              p.write_text(s)
+          elif groovy.exists():
+              p = groovy
+              s = p.read_text()
+              if "create("user")" not in s and "user {" not in s:
+                  block = '''
+              flavorDimensions "app"
+              productFlavors {
+                  user {
+                      dimension "app"
+                      applicationIdSuffix ".user"
+                      resValue "string", "app_name", "Pashto Poetry"
+                  }
+                  admin {
+                      dimension "app"
+                      applicationIdSuffix ".admin"
+                      resValue "string", "app_name", "Pashto Poetry Admin"
+                  }
+              }
+          '''
+                  s = s.replace("android {", "android {\n" + block, 1)
+              s = s.replace("minSdkVersion flutter.minSdkVersion", "minSdkVersion 24")
+              p.write_text(s)
+          else:
+              raise SystemExit("Android Gradle file not found")
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          if manifest.exists():
+              s = manifest.read_text()
+              import re
+              s = re.sub(r'android:label="[^"]+"', 'android:label="@string/app_name"', s, count=1)
+              manifest.write_text(s)
+          PY
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze
+      - name: Analyze Flutter code
         run: flutter analyze --no-pub
 
-      - name: Build release APK
-        run: flutter build apk --release
+      - name: Build User APK
+        run: flutter build apk --release --flavor user --target lib/main_user.dart
 
-      - name: Upload APK
+      - name: Build Admin APK
+        run: flutter build apk --release --flavor admin --target lib/main_admin.dart
+
+      - name: Upload User and Admin APKs
         uses: actions/upload-artifact@v4
         with:
-          name: pashto-poetry-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: pashto-poetry-two-apps
+          path: |
+            build/app/outputs/flutter-apk/app-user-release.apk
+            build/app/outputs/flutter-apk/app-admin-release.apk
           if-no-files-found: error
