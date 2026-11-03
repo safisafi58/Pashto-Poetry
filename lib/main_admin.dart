@@ -175,20 +175,6 @@ class AdminHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Directionality(
     textDirection: TextDirection.rtl,
-    child: Scaffold(
-      appBar: AppBar(
-        backgroundColor: _ink,
-        title: const Text('د اډمین مدیریت', style: TextStyle(color: _paper)),
-        iconTheme: const IconThemeData(color: _gold),
-        actions: [
-          IconButton(
-            tooltip: 'وتل',
-            onPressed: onLogout,
-            icon: const Icon(Icons.logout, color: _gold),
-          ),
-        ],
-      ),
-      body: const poetry.AdminPage(),
-    ),
+    child: poetry.AdminPage(onLogout: onLogout),
   );
 }
